@@ -45,4 +45,5 @@ def check_products():
 
 while True:
     check_products()
+    send_discord(------------------------)
     time.sleep(60)
