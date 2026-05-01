@@ -40,10 +40,9 @@ def check_products():
             f"　Price: {price}"
         )
 
-    message = "\n\n".join(lines)
+    message = "\n\n".join(lines + ["------------------------------"])
     send_discord(message)
 
 while True:
     check_products()
-    send_discord("------------------------------")
     time.sleep(60)
