@@ -66,6 +66,7 @@ while True:
         # 遇到 503 / 429 / 403：休息 15～20 分鐘
         sleep_seconds = random.randint(15 * 60, 20 * 60)
         print(f"{e}. Cooling down for {sleep_seconds // 60} minutes.")
+        send_discord("被封鎖了啦...要等15-20分鐘再繼續試試")
         time.sleep(sleep_seconds)
 
     except requests.RequestException as e:
