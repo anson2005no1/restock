@@ -11,7 +11,7 @@ headers = {
     "User-Agent": "Mozilla/5.0"
 }
 
-def send_discord(title, tags, price, image_url=None):
+def send_discord(title, tags, price, product_url, image_url=None):
     is_sold_out = any("Sold out" in tag for tag in tags)
 
     embed = {
@@ -20,7 +20,7 @@ def send_discord(title, tags, price, image_url=None):
             f"**{title}**\n"
             f"Tags: {', '.join(tags) if tags else 'No tags'}\n"
             f"Price: {price}\n\n"
-            f"{URL}"
+            f"{product_url}"
         ),
         "color": 0xFF0000 if is_sold_out else 0x00FF00,
     }
@@ -66,7 +66,10 @@ def check_products():
         img_tag = product.select_one("img")
         image_url = fix_url(img_tag.get("src")) if img_tag else None
 
-        send_discord(title, tags, price, image_url)
+        link_tag = product.select_one('a[href^="/products/"]')
+        product_url = fix_url(link_tag.get("href")) if link_tag else URL
+
+        send_discord(title, tags, price, product_url, image_url)
 
     requests.post(
         WEBHOOK_URL,
@@ -87,7 +90,12 @@ while True:
         # 遇到 503 / 429 / 403：休息 15～20 分鐘
         sleep_seconds = random.randint(15 * 60, 20 * 60)
         print(f"{e}. Cooling down for {sleep_seconds // 60} minutes.")
-        send_discord("被封了啦...要等15-20分鐘再繼續試試")
+        send_discord(
+            "被封了啦...要等15-20分鐘再繼續試試",
+            [],
+            "N/A",
+            URL
+        )
         time.sleep(sleep_seconds)
 
     except requests.RequestException as e:
