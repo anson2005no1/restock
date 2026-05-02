@@ -20,7 +20,7 @@ def send_discord(title, tags, price, image_url=None):
             f"**{title}**\n"
             f"Tags: {', '.join(tags) if tags else 'No tags'}\n"
             f"Price: {price}\n\n"
-            f"{'Sold Out' if is_sold_out else 'In Stock'} @ {URL}"
+            f"{URL}"
         ),
         "color": 0xFF0000 if is_sold_out else 0x00FF00,
     }
