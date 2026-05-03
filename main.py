@@ -11,6 +11,9 @@ headers = {
     "User-Agent": "Mozilla/5.0"
 }
 
+last_tags = {}
+first_run = True
+
 def send_discord(title, tags, price, product_url, image_url=None):
     is_sold_out = any("Sold out" in tag for tag in tags)
 
@@ -41,6 +44,8 @@ def fix_url(src):
     return src
 
 def check_products():
+    global first_run, last_tags
+
     res = requests.get(URL, headers=headers, timeout=10)
 
     if res.status_code in COOLDOWN_STATUS_CODES:
@@ -50,6 +55,9 @@ def check_products():
 
     soup = BeautifulSoup(res.text, "html.parser")
     products = soup.select("li.grid-item__wrapper")[:3]
+
+    current_products = []
+    has_tag_update = False
 
     for product in products:
         title_tag = product.select_one("p.text_heading_md")
@@ -69,18 +77,55 @@ def check_products():
         link_tag = product.select_one('a[href^="/products/"]')
         product_url = fix_url(link_tag.get("href")) if link_tag else URL
 
-        send_discord(title, tags, price, product_url, image_url)
+        current_products.append({
+            "title": title,
+            "tags": tags,
+            "price": price,
+            "product_url": product_url,
+            "image_url": image_url,
+        })
 
-    requests.post(
-        WEBHOOK_URL,
-        json={"content": "----------------------------------------"},
-        timeout=10
-    )
+        key = product_url
+
+        # 第一次看到這個商品，只記錄，不通知
+        if key not in last_tags:
+            last_tags[key] = tags
+            continue
+
+        # 比對 tags
+        if tags != last_tags[key]:
+            has_tag_update = True
+            last_tags[key] = tags
+
+    if first_run:
+        first_run = False
+        print("First run: saved initial tags, no Discord message sent.")
+        return
+
+    # 只要任一商品的 tags 改變，就傳送這三個商品
+    if has_tag_update:
+        for info in current_products:
+            send_discord(
+                info["title"],
+                info["tags"],
+                info["price"],
+                info["product_url"],
+                info["image_url"]
+            )
+
+        requests.post(
+            WEBHOOK_URL,
+            json={"content": "----------------------------------------"},
+            timeout=10
+        )
+
+        print("Tags changed. Sent Discord notification.")
+    else:
+        print("Tags unchanged. No Discord message sent.")
 
 while True:
     try:
         check_products()
-
         # 正常情況：休息 60～180 秒
         sleep_seconds = random.randint(60, 180)
         print(f"Checked successfully. Sleeping {sleep_seconds} seconds.")
@@ -91,7 +136,7 @@ while True:
         sleep_seconds = random.randint(15 * 60, 20 * 60)
         print(f"{e}. Cooling down for {sleep_seconds // 60} minutes.")
         send_discord(
-            "被封了啦...要等15-20分鐘再繼續試試",
+            "被封了啦...要等15-20分鐘再繼續試試！",
             [],
             "N/A",
             URL
@@ -102,10 +147,22 @@ while True:
         # 其他網路錯誤：避免程式直接死掉，先短暫休息
         sleep_seconds = random.randint(60, 180)
         print(f"Request error: {e}. Sleeping {sleep_seconds} seconds.")
+        send_discord(
+            "網路錯誤...會先暫停 1-3 分鐘！",
+            [],
+            "N/A",
+            URL
+        )
         time.sleep(sleep_seconds)
 
     except Exception as e:
         # 其他未知錯誤：避免直接中斷
         sleep_seconds = random.randint(60, 180)
         print(f"Unexpected error: {e}. Sleeping {sleep_seconds} seconds.")
+        send_discord(
+            "未知錯誤...先暫停一下！等等會自己重試...",
+            [],
+            "N/A",
+            URL
+        )
         time.sleep(sleep_seconds)
