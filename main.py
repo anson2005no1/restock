@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup
 
 URL = "https://cortisofficial.us/"
 WEBHOOK_URL = "https://discord.com/api/webhooks/1499837939956322525/JYfllYd09e6qopnwFQ9j1ItprRuN7vZYZe3W0WwrNtflNcNdFiDNWfOCfr_WMoHCMy7E"
+BOT_NAME = "幫忙檢查有沒有貨的勞工"
+BOT_AVATAR = "https://raw.githubusercontent.com/anson2005no1/restock/refs/heads/main/1.jpg"
 COOLDOWN_STATUS_CODES = {503, 429, 403}
 
 headers = {
@@ -37,7 +39,11 @@ def send_discord(title, tags, price, product_url, image_url=None, status=None):
     if image_url:
         embed["thumbnail"] = {"url": image_url}
 
-    payload = {"embeds": [embed]}
+    payload = {
+        "embeds": [embed],
+        "username": BOT_NAME,
+        "avatar_url": BOT_AVATAR if BOT_AVATAR else None
+    }
     requests.post(WEBHOOK_URL, json=payload, timeout=10)
 
 def fix_url(src):
@@ -121,7 +127,11 @@ def check_products():
 
         requests.post(
             WEBHOOK_URL,
-            json={"content": "----------------------------------------"},
+            json={
+                "content": "----------------------------------------",
+                "username": BOT_NAME,
+                "avatar_url": BOT_AVATAR if BOT_AVATAR else None
+            },
             timeout=10
         )
 
