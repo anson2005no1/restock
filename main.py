@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 
 URL = "https://cortisofficial.us/"
 WEBHOOK_URL = "https://discord.com/api/webhooks/1499837939956322525/JYfllYd09e6qopnwFQ9j1ItprRuN7vZYZe3W0WwrNtflNcNdFiDNWfOCfr_WMoHCMy7E"
-BOT_NAME = "幫忙檢查有沒有貨的勞工"
+BOT_NAME = "幫忙檢查有沒有貨的免費勞工"
 BOT_AVATAR = "https://raw.githubusercontent.com/anson2005no1/restock/refs/heads/main/1.jpg"
 COOLDOWN_STATUS_CODES = {503, 429, 403}
 
