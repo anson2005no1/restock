@@ -14,18 +14,24 @@ headers = {
 last_tags = {}
 first_run = True
 
-def send_discord(title, tags, price, product_url, image_url=None):
-    is_sold_out = any("Sold out" in tag for tag in tags)
+def send_discord(title, tags, price, product_url, image_url=None, status=None):
+    if status == "error":
+        embed_title = "⚠️ 系統通知"
+        color = 0xFFA500
+    else:
+        is_sold_out = any("Sold out" in tag for tag in tags)
+        embed_title = f"{'❌' if is_sold_out else '✅'} {'售完通知' if is_sold_out else '有貨通知'}"
+        color = 0xFF0000 if is_sold_out else 0x00FF00
 
     embed = {
-        "title": f"{'❌' if is_sold_out else '✅'} {'售完通知' if is_sold_out else '有貨通知'}",
+        "title": embed_title,
         "description": (
             f"**{title}**\n"
             f"Tags: {', '.join(tags) if tags else 'No tags'}\n"
             f"Price: {price}\n\n"
             f"{product_url}"
         ),
-        "color": 0xFF0000 if is_sold_out else 0x00FF00,
+        "color": color,
     }
 
     if image_url:
@@ -139,7 +145,8 @@ while True:
             "被封了啦...要等15-20分鐘再繼續試試！",
             [],
             "N/A",
-            URL
+            URL,
+            status="error"
         )
         time.sleep(sleep_seconds)
 
@@ -151,7 +158,8 @@ while True:
             "網路錯誤...會先暫停 1-3 分鐘！",
             [],
             "N/A",
-            URL
+            URL,
+            status="error"
         )
         time.sleep(sleep_seconds)
 
@@ -163,6 +171,7 @@ while True:
             "未知錯誤...先暫停一下！等等會自己重試...",
             [],
             "N/A",
-            URL
+            URL,
+            status="error"
         )
         time.sleep(sleep_seconds)
