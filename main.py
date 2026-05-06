@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 
 URL = "https://cortisofficial.us/"
-WEBHOOK_URL = "https://discord.com/api/webhooks/1499837939956322525/JYfllYd09e6qopnwFQ9j1ItprRuN7vZYZe3W0WwrNtflNcNdFiDNWfOCfr_WMoHCMy7E"
+WEBHOOK_URL = "https://discord.com/api/webhooks/1501625753698172968/rspEM-ORZg7lgz0E_4A6r7Gp3aKpvEalf2hjptP1yC3CQ6_aMgG9CYj-8nuk1JNCfRCV"
 BOT_NAME = "幫忙檢查有沒有貨的免費勞工"
 BOT_AVATAR = "https://raw.githubusercontent.com/anson2005no1/restock/refs/heads/main/1.jpg"
 COOLDOWN_STATUS_CODES = {503, 429, 403}
@@ -66,7 +66,22 @@ def check_products():
     res.raise_for_status()
 
     soup = BeautifulSoup(res.text, "html.parser")
-    products = soup.select("li.grid-item__wrapper")[:3]
+
+    TARGET_PATHS = {
+        "/products/greengreen-bridge-ver-signed",
+        "/products/greengreen-street-ver-signed",
+        "/products/greengreen-studio-ver-signed",
+    }
+
+    all_products = soup.select("li.grid-item__wrapper")
+    products = []
+
+    for product in all_products:
+        link_tag = product.select_one('a[href^="/products/"]')
+        href = link_tag.get("href") if link_tag else ""
+
+        if href in TARGET_PATHS:
+            products.append(product)
 
     current_products = []
     has_tag_update = False
@@ -99,12 +114,10 @@ def check_products():
 
         key = product_url
 
-        # 第一次看到這個商品，只記錄，不通知
         if key not in last_tags:
             last_tags[key] = tags
             continue
 
-        # 比對 tags
         if tags != last_tags[key]:
             has_tag_update = True
             last_tags[key] = tags
@@ -114,7 +127,6 @@ def check_products():
         print("First run: saved initial tags, no Discord message sent.")
         return
 
-    # 只要任一商品的 tags 改變，就傳送這三個商品
     if has_tag_update:
         for info in current_products:
             send_discord(
